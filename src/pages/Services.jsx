@@ -1,0 +1,108 @@
+import React, { useState, useEffect } from 'react';
+import { getServices, addService, deleteService } from '../services/api';
+import { Plus, Trash2, Edit } from 'lucide-react';
+
+const Services = () => {
+  const [services, setServices] = useState([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newService, setNewService] = useState({ name: '', duration: '', price: '', image: '' });
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = () => {
+    getServices().then(setServices);
+  };
+
+  const handleAddSubmit = async (e) => {
+    e.preventDefault();
+    await addService({ ...newService, price: parseFloat(newService.price) || 0 });
+    setIsAdding(false);
+    setNewService({ name: '', duration: '', price: '', image: '' });
+    fetchServices();
+  };
+
+  const handleDelete = async (id) => {
+    if (confirm('Are you sure you want to delete this service?')) {
+      await deleteService(id);
+      fetchServices();
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Services Management</h2>
+        <button
+          onClick={() => setIsAdding(!isAdding)}
+          className="btn-primary flex items-center shadow-sm"
+        >
+          {isAdding ? 'Cancel' : <><Plus className="w-5 h-5 mr-1" /> Add Service</>}
+        </button>
+      </div>
+
+      {isAdding && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-primary animate-in fade-in slide-in-from-top-4 duration-300">
+          <h3 className="text-lg font-bold mb-4 text-gray-800">Add New Service</h3>
+          <form onSubmit={handleAddSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
+              <input required type="text" value={newService.name} onChange={e => setNewService({ ...newService, name: e.target.value })} className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-primary focus:border-primary" placeholder="e.g. Bridal Makeup" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+              <input required type="text" value={newService.duration} onChange={e => setNewService({ ...newService, duration: e.target.value })} className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-primary focus:border-primary" placeholder="e.g. 60 mins" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+              <input required type="number" step="0.01" value={newService.price} onChange={e => setNewService({ ...newService, price: e.target.value })} className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-primary focus:border-primary" placeholder="0.00" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+              <input type="text" value={newService.image} onChange={e => setNewService({ ...newService, image: e.target.value })} className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-primary focus:border-primary" placeholder="https://..." />
+            </div>
+            <div className="md:col-span-2 flex justify-end mt-2">
+              <button type="submit" className="btn-primary shadow-sm hover:shadow">Save Service</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {services.map(service => (
+          <div key={service.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
+            <div className="h-48 bg-gray-100 relative overflow-hidden">
+              {service.image ? (
+                <img src={service.image} alt={service.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              ) : (
+                <div className="w-full h-full bg-primary/5 flex items-center justify-center text-primary/40 font-bold border-b border-primary/10">No Image</div>
+              )}
+              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button className="p-1.5 bg-white text-gray-600 rounded-md shadow hover:text-primary transition-colors"><Edit className="w-4 h-4" /></button>
+                <button onClick={() => handleDelete(service.id)} className="p-1.5 bg-white text-red-600 rounded-md shadow hover:bg-red-50 transition-colors"><Trash2 className="w-4 h-4" /></button>
+              </div>
+            </div>
+            <div className="p-5 flex-1 flex flex-col">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-bold text-gray-800 text-lg leading-tight pr-2">{service.name}</h3>
+                <span className="font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md text-sm">${service.price}</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-auto flex items-center pt-3 border-t border-gray-50">
+                <span className="bg-gray-100 px-2 py-0.5 rounded text-xs mr-2">Duration</span> {service.duration}
+              </p>
+            </div>
+          </div>
+        ))}
+
+        {services.length === 0 && !isAdding && (
+          <div className="col-span-full py-16 text-center text-gray-500 bg-white rounded-xl border border-gray-100 border-dashed">
+            <p className="text-lg font-medium text-gray-600 mb-2">No services yet</p>
+            <p className="text-sm">Click "Add Service" to create your first offering.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+export default Services;
