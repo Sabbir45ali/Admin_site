@@ -117,7 +117,7 @@ const Services = () => {
           <SkeletonTheme baseColor="#f3f4f6" highlightColor="#e5e7eb">
             {[1, 2, 3].map(i => (
               <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                <Skeleton height={192} className="w-full" style={{ borderRadius: 0 }} />
+                <Skeleton height={192} className="w-full rounded-none" />
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-2">
                     <Skeleton width={140} height={20} />
