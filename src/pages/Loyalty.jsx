@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getUsers, updateLoyaltyPoints } from '../services/api';
 import { Search, Star, Medal } from 'lucide-react';
+import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 const Loyalty = () => {
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingPoints, setEditingPoints] = useState(null);
 
@@ -12,7 +15,11 @@ const Loyalty = () => {
   }, []);
 
   const fetchUsers = () => {
-    getUsers().then(setUsers);
+    setLoading(true);
+    getUsers().then(data => {
+      setUsers(data);
+      setLoading(false);
+    });
   };
 
   const handleUpdatePoints = async (userId, points) => {
@@ -26,8 +33,8 @@ const Loyalty = () => {
   };
 
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => b.loyaltyPoints - a.loyaltyPoints);
 
   return (
@@ -72,7 +79,21 @@ const Loyalty = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.length > 0 ? (
+              {loading ? (
+                <SkeletonTheme baseColor="#f3f4f6" highlightColor="#e5e7eb">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <tr key={i} className="border-b border-gray-50">
+                      <td className="px-6 py-4"><Skeleton circle width={32} height={32} /></td>
+                      <td className="px-6 py-4">
+                        <Skeleton width={120} height={16} className="mb-1" />
+                        <Skeleton width={150} height={14} />
+                      </td>
+                      <td className="px-6 py-4 text-center"><Skeleton width={80} height={24} borderRadius={16} className="mx-auto" /></td>
+                      <td className="px-6 py-4 text-right flex gap-2 justify-end mt-1"><Skeleton width={100} height={30} borderRadius={6} /></td>
+                    </tr>
+                  ))}
+                </SkeletonTheme>
+              ) : filteredUsers.length > 0 ? (
                 filteredUsers.map((user, idx) => (
                   <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">

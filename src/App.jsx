@@ -10,6 +10,7 @@ import CalendarPage from './pages/Calendar';
 import Services from './pages/Services';
 import Offers from './pages/Offers';
 import Loyalty from './pages/Loyalty';
+import Reviews from './pages/Reviews';
 import Settings from './pages/Settings';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
             <Route path="services" element={<Services />} />
             <Route path="offers" element={<Offers />} />
             <Route path="loyalty" element={<Loyalty />} />
+            <Route path="reviews" element={<Reviews />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 

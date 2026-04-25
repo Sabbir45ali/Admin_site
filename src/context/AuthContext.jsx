@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 
 export const AuthContext = createContext();
 
@@ -15,14 +16,23 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    // Mock admin authentication
-    if (email === 'admin@beauty.com' && password === 'admin123') {
-      const adminUser = { uid: 'admin-1', email, role: 'admin', name: 'Admin User' };
-      localStorage.setItem('admin_user', JSON.stringify(adminUser));
-      setUser(adminUser);
-      return true;
+    try {
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await response.json();
+      if (data.success && data.token) {
+        const adminUser = { uid: data.uid, email, role: 'admin', token: data.token };
+        localStorage.setItem('admin_user', JSON.stringify(adminUser));
+        setUser(adminUser);
+        return true;
+      }
+      throw new Error(data.message || 'Invalid email or password');
+    } catch (err) {
+      throw new Error(err.message || 'Failed to authenticate');
     }
-    throw new Error('Invalid email or password');
   };
 
   const logout = () => {

@@ -1,197 +1,204 @@
-// Mock API using localStorage for persistence
+import { API_BASE_URL } from "../config";
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const getInitialData = (key, defaultData) => {
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : defaultData;
-};
-
-// Mock Users
-const INITIAL_USERS = [
-  {
-    id: "1",
-    name: "Alice Smith",
-    email: "alice@example.com",
-    phone: "123-456-7890",
-    loyaltyPoints: 120,
-  },
-  {
-    id: "2",
-    name: "Bob Johnson",
-    email: "bob@example.com",
-    phone: "987-654-3210",
-    loyaltyPoints: 45,
-  },
-];
-
-// Mock Bookings
-const INITIAL_BOOKINGS = [
-  {
-    id: "101",
-    userId: "1",
-    userName: "Alice Smith",
-    service: "Haircut",
-    date: new Date().toISOString(),
-    status: "Pending",
-  },
-  {
-    id: "102",
-    userId: "2",
-    userName: "Bob Johnson",
-    service: "Facial",
-    date: new Date(Date.now() + 86400000).toISOString(),
-    status: "Confirmed",
-  },
-];
-
-// Mock Services
-const INITIAL_SERVICES = [
-  {
-    id: "s1",
-    name: "Bridal Makeup",
-    duration: "120 mins",
-    price: 150,
-    image:
-      "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?q=80&w=600&auto=format&fit=crop",
-  },
-  {
-    id: "s2",
-    name: "Hair Styling",
-    duration: "60 mins",
-    price: 50,
-    image:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop",
-  },
-];
-
-// Mock Offers
-const INITIAL_OFFERS = [
-  {
-    id: "o1",
-    title: "Summer Special",
-    description: "20% off on all facials",
-    validTill: new Date(Date.now() + 7 * 86400000).toISOString(),
-  },
-];
-
-export const mockDb = {
-  users: getInitialData("mock_users", INITIAL_USERS),
-  bookings: getInitialData("mock_bookings", INITIAL_BOOKINGS),
-  services: getInitialData("mock_services", INITIAL_SERVICES),
-  offers: getInitialData("mock_offers", INITIAL_OFFERS),
-};
-
-const saveDb = () => {
-  localStorage.setItem("mock_users", JSON.stringify(mockDb.users));
-  localStorage.setItem("mock_bookings", JSON.stringify(mockDb.bookings));
-  localStorage.setItem("mock_services", JSON.stringify(mockDb.services));
-  localStorage.setItem("mock_offers", JSON.stringify(mockDb.offers));
+const getAuthHeaders = () => {
+  const userStr = localStorage.getItem("admin_user");
+  if (userStr) {
+    const user = JSON.parse(userStr);
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${user.token}`,
+    };
+  }
+  return { "Content-Type": "application/json" };
 };
 
 // Users API
 export const getUsers = async () => {
-  await delay(400);
-  return mockDb.users;
+  const res = await fetch(`${API_BASE_URL}/clients`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to fetch users");
+  return data.data || [];
 };
 
-export const updateLoyaltyPoints = async (userId, points) => {
-  await delay(300);
-  const user = mockDb.users.find((u) => u.id === userId);
-  if (user) {
-    user.loyaltyPoints = points;
-    saveDb();
-    return user;
-  }
-  throw new Error("User not found");
+export const updateLoyaltyPoints = async (clientId, points) => {
+  const res = await fetch(`${API_BASE_URL}/clients/${clientId}/loyalty`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ points: parseInt(points) || 0 }),
+  });
+  if (!res.ok) throw new Error("Failed to update points");
+  return res.json();
+};
+
+export const getLoyaltySettings = async () => {
+  const res = await fetch(`${API_BASE_URL}/loyalty-settings`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error("Failed to fetch loyalty settings");
+  return data.data;
+};
+
+export const updateLoyaltySettings = async (settings) => {
+  const res = await fetch(`${API_BASE_URL}/loyalty-settings`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(settings),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error("Failed to update loyalty settings");
+  return data.data;
 };
 
 // Bookings API
 export const getBookings = async () => {
-  await delay(400);
-  return mockDb.bookings;
+  const res = await fetch(`${API_BASE_URL}/appointments`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to fetch bookings");
+  return data.data || [];
 };
 
 export const updateBookingStatus = async (bookingId, status) => {
-  await delay(300);
-  const booking = mockDb.bookings.find((b) => b.id === bookingId);
-  if (booking) {
-    booking.status = status;
-    saveDb();
-    return booking;
-  }
-  throw new Error("Booking not found");
+  const res = await fetch(`${API_BASE_URL}/appointments/${bookingId}/status`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to update status");
+  return data.data;
+};
+
+export const rescheduleAppointment = async (bookingId, date, time) => {
+  const res = await fetch(
+    `${API_BASE_URL}/appointments/${bookingId}/reschedule`,
+    {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ date, time }),
+    },
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to reschedule");
+  return data.data;
 };
 
 // Services API
 export const getServices = async () => {
-  await delay(300);
-  return mockDb.services;
+  const res = await fetch(`${API_BASE_URL}/services`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to fetch services");
+  return data.data || [];
 };
 
 export const addService = async (service) => {
-  await delay(300);
-  const newService = { ...service, id: `s${Date.now()}` };
-  mockDb.services.push(newService);
-  saveDb();
-  return newService;
+  const res = await fetch(`${API_BASE_URL}/services`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(service),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to add service");
+  // Return structure as new service for frontend hooks to immediately push state
+  return { id: data.data.id, ...service };
 };
 
 export const updateService = async (id, updatedData) => {
-  await delay(300);
-  const index = mockDb.services.findIndex((s) => s.id === id);
-  if (index !== -1) {
-    mockDb.services[index] = { ...mockDb.services[index], ...updatedData };
-    saveDb();
-    return mockDb.services[index];
-  }
-  throw new Error("Service not found");
+  const res = await fetch(`${API_BASE_URL}/services/${id}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(updatedData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to update service");
+  return data.data;
 };
 
 export const deleteService = async (id) => {
-  await delay(300);
-  mockDb.services = mockDb.services.filter((s) => s.id !== id);
-  saveDb();
+  const res = await fetch(`${API_BASE_URL}/services/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to delete service");
   return id;
 };
 
 // Offers API
 export const getOffers = async () => {
-  await delay(300);
-  return mockDb.offers;
+  const res = await fetch(`${API_BASE_URL}/offers`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to fetch offers");
+  return data.data || [];
 };
 
 export const addOffer = async (offer) => {
-  await delay(300);
-  const newOffer = { ...offer, id: `o${Date.now()}` };
-  mockDb.offers.push(newOffer);
-  saveDb();
-  return newOffer;
+  const res = await fetch(`${API_BASE_URL}/offers`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(offer),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to add offer");
+  return { id: data.data.id, ...offer };
 };
 
 export const deleteOffer = async (id) => {
-  await delay(300);
-  mockDb.offers = mockDb.offers.filter((o) => o.id !== id);
-  saveDb();
+  const res = await fetch(`${API_BASE_URL}/offers/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to delete offer");
   return id;
 };
 
 // Dashboard Stats
 export const getDashboardStats = async () => {
-  await delay(400);
-  const today = new Date().toISOString().split("T")[0];
-  const todaysAppointments = mockDb.bookings.filter((b) =>
-    b.date.startsWith(today),
-  );
+  const res = await fetch(`${API_BASE_URL}/stats`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to fetch stats");
+  return data.data;
+};
 
-  return {
-    totalUsers: mockDb.users.length,
-    totalBookings: mockDb.bookings.length,
-    todaysAppointmentsCount: todaysAppointments.length,
-    avgLoyaltyPoints:
-      Math.round(
-        mockDb.users.reduce((acc, u) => acc + (u.loyaltyPoints || 0), 0) /
-          mockDb.users.length,
-      ) || 0,
-  };
+// Reviews API
+export const getReviews = async () => {
+  const res = await fetch(`${API_BASE_URL}/reviews`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to fetch reviews");
+  return data.data || [];
+};
+
+export const approveReview = async (id, isApproved) => {
+  const res = await fetch(`${API_BASE_URL}/reviews/${id}/approve`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ isApproved }),
+  });
+  const data = await res.json();
+  if (!res.ok)
+    throw new Error(data.message || "Failed to update review status");
+  return data.success;
+};
+
+export const deleteReview = async (id) => {
+  const res = await fetch(`${API_BASE_URL}/reviews/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to delete review");
+  return id;
 };

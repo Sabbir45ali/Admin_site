@@ -9,7 +9,8 @@ import {
   Gift,
   Star,
   Settings,
-  X
+  X,
+  MessageSquareShare
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -21,6 +22,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { name: 'Services', path: '/services', icon: Scissors },
     { name: 'Offers', path: '/offers', icon: Gift },
     { name: 'Loyalty', path: '/loyalty', icon: Star },
+    { name: 'Reviews', path: '/reviews', icon: MessageSquareShare },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];
 

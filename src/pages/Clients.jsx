@@ -1,19 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { getUsers } from '../services/api';
-import { Search, ChevronRight } from 'lucide-react';
+import { Search, ChevronRight, X, Award } from 'lucide-react';
+import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 const Clients = () => {
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [pointsInput, setPointsInput] = useState('');
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    getUsers().then(setUsers);
+    getUsers().then(data => {
+      setUsers(data);
+      setLoading(false);
+    });
   }, []);
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.phone.includes(searchTerm)
-  );
+  const filteredUsers = users.filter(user => {
+    const nameMatch = user.name?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false;
+    const phoneMatch = user.phone?.includes(searchTerm) || false;
+    const emailMatch = user.email?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false;
+    return nameMatch || phoneMatch || emailMatch;
+  });
+
+  const handleUpdatePoints = async (e) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+    setUpdating(true);
+    try {
+      // Need to import updateLoyaltyPoints at the top wait, I will just require it here dynamically or add it to imports
+      const { updateLoyaltyPoints } = await import('../services/api');
+      await updateLoyaltyPoints(selectedUser.id, parseInt(pointsInput) || 0);
+      setUsers(users.map(u => u.id === selectedUser.id ? { ...u, loyaltyPoints: parseInt(pointsInput) || 0 } : u));
+      setSelectedUser(null);
+    } catch (err) {
+      console.error(err);
+    }
+    setUpdating(false);
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -42,11 +69,25 @@ const Clients = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.length > 0 ? (
+            {loading ? (
+              <SkeletonTheme baseColor="#f3f4f6" highlightColor="#e5e7eb">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <tr key={i} className="border-b border-gray-50">
+                    <td className="px-6 py-4"><Skeleton width={120} height={16} /></td>
+                    <td className="px-6 py-4">
+                      <Skeleton width={150} height={14} className="mb-1" />
+                      <Skeleton width={100} height={12} />
+                    </td>
+                    <td className="px-6 py-4 text-center"><Skeleton width={60} height={20} borderRadius={10} /></td>
+                    <td className="px-6 py-4 text-right"><Skeleton circle width={32} height={32} /></td>
+                  </tr>
+                ))}
+              </SkeletonTheme>
+            ) : filteredUsers.length > 0 ? (
               filteredUsers.map(user => (
                 <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors group cursor-pointer">
                   <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{user.name}</div>
+                    <div className="text-sm text-gray-700 whitespace-nowrap">{user.displayName || user.name || 'Unknown'}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-600">{user.email}</div>
@@ -58,7 +99,10 @@ const Clients = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-gray-400 group-hover:text-primary transition-colors p-2 hover:bg-primary/5 rounded-full inline-flex items-center justify-center">
+                    <button
+                      onClick={() => { setSelectedUser(user); setPointsInput(user.loyaltyPoints || 0); }}
+                      className="text-gray-400 group-hover:text-primary transition-colors p-2 hover:bg-primary/5 rounded-full inline-flex items-center justify-center"
+                    >
                       <ChevronRight className="w-5 h-5" />
                     </button>
                   </td>
@@ -77,6 +121,58 @@ const Clients = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Client Edit Modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedUser(null)}>
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/80">
+              <h3 className="text-lg font-bold text-gray-800">Edit Client</h3>
+              <button onClick={() => setSelectedUser(null)} className="p-1.5 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">
+                  {(selectedUser.displayName || selectedUser.name || 'U')[0].toUpperCase()}
+                </div>
+                <h4 className="font-bold text-gray-800 text-lg">{selectedUser.displayName || selectedUser.name || 'Unknown Client'}</h4>
+                <p className="text-sm text-gray-500">{selectedUser.email}</p>
+                {selectedUser.phone && <p className="text-xs text-gray-400 mt-1">{selectedUser.phone}</p>}
+              </div>
+
+              <form onSubmit={handleUpdatePoints} className="space-y-4">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <Award className="w-4 h-4 mr-1.5 text-[#FF69B4]" />
+                    Loyalty Points
+                  </label>
+                  <div className="flex items-center">
+                    <input
+                      type="number"
+                      value={pointsInput}
+                      onChange={e => setPointsInput(e.target.value)}
+                      className="w-full border border-gray-300 rounded-l-md px-4 py-2 focus:ring-primary focus:border-primary text-center font-bold text-lg"
+                    />
+                    <div className="bg-gray-200 px-4 py-2 rounded-r-md text-gray-600 font-medium">pts</div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button type="button" onClick={() => setSelectedUser(null)} className="flex-1 py-2 rounded-xl font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={updating} className={`flex-1 py-2 rounded-xl font-medium bg-gradient-to-r from-[#FF69B4] to-[#FF1493] text-white shadow-md hover:opacity-90 transition-all ${updating ? 'opacity-70' : ''}`}>
+                    {updating ? 'Saving...' : 'Update Points'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
