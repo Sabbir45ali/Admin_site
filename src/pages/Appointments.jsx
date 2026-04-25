@@ -51,6 +51,18 @@ const Appointments = () => {
     return (app.status || '').toLowerCase() === filter.toLowerCase();
   });
 
+  const formatDateLine = (dateValue) => {
+    if (!dateValue) return 'N/A';
+    const parsed = new Date(dateValue);
+    if (Number.isNaN(parsed.getTime())) return String(dateValue);
+    return format(parsed, 'yyyy-MM-dd');
+  };
+
+  const formatTimeLine = (timeValue) => {
+    if (!timeValue) return 'N/A';
+    return String(timeValue).trim();
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Confirmed': return <span className="px-2.5 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full border border-green-200 inline-flex items-center"><Check className="w-3 h-3 mr-1" />Confirmed</span>;
@@ -113,8 +125,8 @@ const Appointments = () => {
                   <td className="px-6 py-4 font-medium text-gray-900">{app.userName || app.userEmail || 'Unknown'}</td>
                   <td className="px-6 py-4 text-gray-700 font-medium text-sm">{app.serviceName || app.service || 'N/A'}</td>
                   <td className="px-6 py-4 text-sm text-gray-600 text-center">
-                    <div className="font-medium text-gray-900">{app.date}</div>
-                    <div className="text-gray-500">{app.time}</div>
+                    <div className="font-medium text-gray-900 whitespace-nowrap leading-tight">{formatDateLine(app.date)}</div>
+                    <div className="text-gray-500 whitespace-nowrap leading-tight mt-1">{formatTimeLine(app.time)}</div>
                   </td>
                   <td className="px-6 py-4 text-center">{getStatusBadge(app.status)}</td>
                   <td className="px-6 py-4 text-right">
