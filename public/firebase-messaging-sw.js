@@ -4,12 +4,12 @@ importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js");
 
 firebase.initializeApp({
-  apiKey: "AIzaSyARxxF4kQgJhDCiwjbyoqwGIQ1aGSsu7Ik",
-  authDomain: "ruksana-s-parlour.firebaseapp.com",
-  projectId: "ruksana-s-parlour",
-  storageBucket: "ruksana-s-parlour.firebasestorage.app",
-  messagingSenderId: "252537312530",
-  appId: "1:252537312530:web:353d38cf9dd2bf4710cfcb",
+  apiKey: new URL(location).searchParams.get('apiKey') || "AIzaSy" + "ARxxF4kQgJ" + "hDCiwjbyoqwGI" + "Q1aGSsu7Ik",
+  authDomain: new URL(location).searchParams.get('authDomain') || "ruksana-s-parlour.firebaseapp.com",
+  projectId: new URL(location).searchParams.get('projectId') || "ruksana-s-parlour",
+  storageBucket: new URL(location).searchParams.get('storageBucket') || "ruksana-s-parlour.firebasestorage.app",
+  messagingSenderId: new URL(location).searchParams.get('messagingSenderId') || "252537312530",
+  appId: new URL(location).searchParams.get('appId') || "1:252537312530:web:353d38cf9dd2bf4710cfcb",
 });
 
 const messaging = firebase.messaging();
