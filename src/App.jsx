@@ -11,6 +11,7 @@ import Services from './pages/Services';
 import Offers from './pages/Offers';
 import Loyalty from './pages/Loyalty';
 import Reviews from './pages/Reviews';
+import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
             <Route path="offers" element={<Offers />} />
             <Route path="loyalty" element={<Loyalty />} />
             <Route path="reviews" element={<Reviews />} />
+            <Route path="notifications" element={<Notifications />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 

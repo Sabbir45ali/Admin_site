@@ -87,6 +87,17 @@ export const rescheduleAppointment = async (bookingId, date, time) => {
   return data.data;
 };
 
+export const createAppointment = async (appointmentData) => {
+  const res = await fetch(`${API_BASE_URL}/appointments`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(appointmentData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to create appointment");
+  return data.data;
+};
+
 // Services API
 export const getServices = async () => {
   const res = await fetch(`${API_BASE_URL}/services`, {
@@ -202,3 +213,45 @@ export const deleteReview = async (id) => {
   if (!res.ok) throw new Error(data.message || "Failed to delete review");
   return id;
 };
+
+// Notifications API
+export const sendNotification = async (notificationData) => {
+  const res = await fetch(`${API_BASE_URL}/notifications/send`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(notificationData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to send notification");
+  return data.data;
+};
+
+export const getNotifications = async () => {
+  const res = await fetch(`${API_BASE_URL}/notifications`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to fetch notifications");
+  return data.data || [];
+};
+
+export const saveAdminFcmToken = async (fcmToken) => {
+  const res = await fetch(`${API_BASE_URL}/fcm-token`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ fcmToken }),
+  });
+  if (!res.ok) throw new Error("Failed to save admin FCM token");
+};
+
+export const sendMassEmail = async (emailData) => {
+  const res = await fetch(`${API_BASE_URL}/emails/send`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(emailData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to send mass email");
+  return data.data;
+};
+

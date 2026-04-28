@@ -111,7 +111,7 @@ const Settings = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 opacity-70 cursor-not-allowed">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Parlour Name</label>
-              <input type="text" disabled defaultValue="Ruksana's Beauty Parlour" className="w-full border border-gray-300 rounded-md px-3 py-2.5 bg-gray-50" />
+              <input type="text" disabled defaultValue="Ruk's Glow House" className="w-full border border-gray-300 rounded-md px-3 py-2.5 bg-gray-50" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Contact Email</label>

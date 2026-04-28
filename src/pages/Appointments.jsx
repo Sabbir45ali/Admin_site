@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getBookings, updateBookingStatus, rescheduleAppointment } from '../services/api';
+import { getBookings, updateBookingStatus, rescheduleAppointment, createAppointment, getServices } from '../services/api';
 import { format } from 'date-fns';
-import { Check, X, Clock, CheckCircle2, Calendar } from 'lucide-react';
+import { Check, X, Clock, CheckCircle2, Calendar, Plus, User, Mail, Phone, Scissors } from 'lucide-react';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
@@ -11,6 +11,21 @@ const Appointments = () => {
   const [filter, setFilter] = useState('All');
   const [rescheduleData, setRescheduleData] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // Add appointment modal state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [services, setServices] = useState([]);
+  const [servicesLoading, setServicesLoading] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [newAppointment, setNewAppointment] = useState({
+    userName: '',
+    userEmail: '',
+    userPhone: '',
+    serviceName: '',
+    date: '',
+    time: '10:00',
+    status: 'Confirmed',
+  });
 
   useEffect(() => {
     fetchAppointments();
@@ -42,6 +57,40 @@ const Appointments = () => {
       fetchAppointments();
     } catch (err) {
       console.error(err);
+    }
+    setSaving(false);
+  };
+
+  const openAddModal = async () => {
+    setShowAddModal(true);
+    setAddError('');
+    setNewAppointment({
+      userName: '', userEmail: '', userPhone: '', serviceName: '', date: '', time: '10:00', status: 'Confirmed',
+    });
+    setServicesLoading(true);
+    try {
+      const data = await getServices();
+      setServices(data || []);
+    } catch (e) {
+      console.error(e);
+    }
+    setServicesLoading(false);
+  };
+
+  const handleAddAppointment = async (e) => {
+    e.preventDefault();
+    setAddError('');
+    if (!newAppointment.userName || !newAppointment.serviceName || !newAppointment.date || !newAppointment.time) {
+      setAddError('Please fill in all required fields (Client Name, Service, Date, Time).');
+      return;
+    }
+    setSaving(true);
+    try {
+      await createAppointment(newAppointment);
+      setShowAddModal(false);
+      fetchAppointments();
+    } catch (err) {
+      setAddError(err.message || 'Failed to create appointment.');
     }
     setSaving(false);
   };
@@ -79,16 +128,25 @@ const Appointments = () => {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
         <h2 className="text-xl font-bold text-gray-800">Appointments Management</h2>
-        <div className="flex flex-wrap gap-2 bg-gray-100 p-1 rounded-lg">
-          {['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'].map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${filter === f ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
-            >
-              {f}
-            </button>
-          ))}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={openAddModal}
+            className="inline-flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-primary/90 transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            Add Appointment
+          </button>
+          <div className="flex flex-wrap gap-2 bg-gray-100 p-1 rounded-lg">
+            {['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'].map(f => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${filter === f ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -217,6 +275,148 @@ const Appointments = () => {
                 </button>
                 <button type="submit" disabled={saving} className={`flex-1 py-2 rounded-xl font-medium bg-primary text-white shadow-md hover:bg-primary/90 transition-all ${saving ? 'opacity-70' : ''}`}>
                   {saving ? 'Saving...' : 'Send Request'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Appointment Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setShowAddModal(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/80">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <Plus className="w-5 h-5 text-primary" />
+                New Appointment
+              </h3>
+              <button onClick={() => setShowAddModal(false)} className="p-1.5 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddAppointment} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              {addError && (
+                <div className="bg-red-50 text-red-600 text-xs font-medium p-3 rounded-lg border border-red-100">
+                  {addError}
+                </div>
+              )}
+
+              {/* Client Name */}
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">Client Name *</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><User className="w-4 h-4 text-gray-400" /></div>
+                  <input
+                    type="text"
+                    required
+                    value={newAppointment.userName}
+                    onChange={e => setNewAppointment({ ...newAppointment, userName: e.target.value })}
+                    placeholder="e.g. Fatima Khan"
+                    className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Client Email */}
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">Client Email</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Mail className="w-4 h-4 text-gray-400" /></div>
+                  <input
+                    type="email"
+                    value={newAppointment.userEmail}
+                    onChange={e => setNewAppointment({ ...newAppointment, userEmail: e.target.value })}
+                    placeholder="client@email.com (for notifications)"
+                    className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Client Phone */}
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">Client Phone</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Phone className="w-4 h-4 text-gray-400" /></div>
+                  <input
+                    type="tel"
+                    value={newAppointment.userPhone}
+                    onChange={e => setNewAppointment({ ...newAppointment, userPhone: e.target.value })}
+                    placeholder="+911234567890"
+                    className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Service */}
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">Service *</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Scissors className="w-4 h-4 text-gray-400" /></div>
+                  {servicesLoading ? (
+                    <div className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-400">Loading services...</div>
+                  ) : (
+                    <select
+                      required
+                      value={newAppointment.serviceName}
+                      onChange={e => setNewAppointment({ ...newAppointment, serviceName: e.target.value })}
+                      className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all appearance-none cursor-pointer bg-white"
+                    >
+                      <option value="">Select a service</option>
+                      {services.map(s => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              {/* Date & Time */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">Date *</label>
+                  <input
+                    type="date"
+                    required
+                    min={new Date().toISOString().split('T')[0]}
+                    value={newAppointment.date}
+                    onChange={e => setNewAppointment({ ...newAppointment, date: e.target.value })}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">Time *</label>
+                  <input
+                    type="time"
+                    required
+                    value={newAppointment.time}
+                    onChange={e => setNewAppointment({ ...newAppointment, time: e.target.value })}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">Status</label>
+                <select
+                  value={newAppointment.status}
+                  onChange={e => setNewAppointment({ ...newAppointment, status: e.target.value })}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all appearance-none cursor-pointer bg-white"
+                >
+                  <option value="Confirmed">Confirmed</option>
+                  <option value="Pending">Pending</option>
+                </select>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-3">
+                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-2.5 rounded-xl font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" disabled={saving} className={`flex-1 py-2.5 rounded-xl font-semibold bg-primary text-white shadow-md hover:bg-primary/90 transition-all ${saving ? 'opacity-70' : ''}`}>
+                  {saving ? 'Creating...' : 'Create Appointment'}
                 </button>
               </div>
             </form>

@@ -10,7 +10,8 @@ import {
   Star,
   Settings,
   X,
-  MessageSquareShare
+  MessageSquareShare,
+  Bell
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -23,6 +24,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { name: 'Offers', path: '/offers', icon: Gift },
     { name: 'Loyalty', path: '/loyalty', icon: Star },
     { name: 'Reviews', path: '/reviews', icon: MessageSquareShare },
+    { name: 'Notifications', path: '/notifications', icon: Bell },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];
 
