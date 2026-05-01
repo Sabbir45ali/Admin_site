@@ -10,6 +10,7 @@ const Clients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [pointsInput, setPointsInput] = useState('');
+  const [notesInput, setNotesInput] = useState('');
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
@@ -26,15 +27,15 @@ const Clients = () => {
     return nameMatch || phoneMatch || emailMatch;
   });
 
-  const handleUpdatePoints = async (e) => {
+  const handleUpdatePointsAndNotes = async (e) => {
     e.preventDefault();
     if (!selectedUser) return;
     setUpdating(true);
     try {
-      // Need to import updateLoyaltyPoints at the top wait, I will just require it here dynamically or add it to imports
-      const { updateLoyaltyPoints } = await import('../services/api');
+      const { updateLoyaltyPoints, updateClientNotes } = await import('../services/api');
       await updateLoyaltyPoints(selectedUser.id, parseInt(pointsInput) || 0);
-      setUsers(users.map(u => u.id === selectedUser.id ? { ...u, loyaltyPoints: parseInt(pointsInput) || 0 } : u));
+      await updateClientNotes(selectedUser.id, notesInput);
+      setUsers(users.map(u => u.id === selectedUser.id ? { ...u, loyaltyPoints: parseInt(pointsInput) || 0, adminNotes: notesInput } : u));
       setSelectedUser(null);
     } catch (err) {
       console.error(err);
@@ -100,7 +101,11 @@ const Clients = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button
-                      onClick={() => { setSelectedUser(user); setPointsInput(user.loyaltyPoints || 0); }}
+                      onClick={() => { 
+                        setSelectedUser(user); 
+                        setPointsInput(user.loyaltyPoints || 0);
+                        setNotesInput(user.adminNotes || '');
+                      }}
                       className="text-gray-400 group-hover:text-primary transition-colors p-2 hover:bg-primary/5 rounded-full inline-flex items-center justify-center"
                     >
                       <ChevronRight className="w-5 h-5" />
@@ -143,8 +148,8 @@ const Clients = () => {
                 {selectedUser.phone && <p className="text-xs text-gray-400 mt-1">{selectedUser.phone}</p>}
               </div>
 
-              <form onSubmit={handleUpdatePoints} className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <form onSubmit={handleUpdatePointsAndNotes} className="space-y-4">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-4">
                   <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                     <Award className="w-4 h-4 mr-1.5 text-[#FF69B4]" />
                     Loyalty Points
@@ -158,6 +163,19 @@ const Clients = () => {
                     />
                     <div className="bg-gray-200 px-4 py-2 rounded-r-md text-gray-600 font-medium">pts</div>
                   </div>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    Private Admin Notes
+                  </label>
+                  <textarea
+                    value={notesInput}
+                    onChange={e => setNotesInput(e.target.value)}
+                    placeholder="E.g. Allergic to particular brand, prefers cold coffee..."
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary focus:border-primary resize-none outline-none"
+                  />
                 </div>
 
                 <div className="flex gap-2 pt-2">

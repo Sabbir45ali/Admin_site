@@ -10,7 +10,7 @@ const Services = () => {
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [editingServiceId, setEditingServiceId] = useState(null);
-  const [newService, setNewService] = useState({ name: '', duration: '', price: '', image: '' });
+  const [newService, setNewService] = useState({ name: '', duration: '', price: '', image: '', isPackage: false });
   const [imageFile, setImageFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -52,7 +52,7 @@ const Services = () => {
 
     setIsAdding(false);
     setEditingServiceId(null);
-    setNewService({ name: '', duration: '', price: '', image: '' });
+    setNewService({ name: '', duration: '', price: '', image: '', isPackage: false });
     setImageFile(null);
     setUploading(false);
     fetchServices();
@@ -74,7 +74,7 @@ const Services = () => {
             setIsAdding(!isAdding);
             if (isAdding) {
               setEditingServiceId(null);
-              setNewService({ name: '', duration: '', price: '', image: '' });
+              setNewService({ name: '', duration: '', price: '', image: '', isPackage: false });
             }
           }}
           className="btn-primary flex items-center shadow-sm"
@@ -100,10 +100,22 @@ const Services = () => {
               <input required type="text" value={newService.price} onChange={e => setNewService({ ...newService, price: e.target.value })} className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-primary focus:border-primary" placeholder="e.g. 500 - 1000" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Service Image</label>
-              <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files[0])} className="w-full border border-gray-300 rounded-md px-4 py-1.5 focus:ring-primary focus:border-primary text-sm file:mr-4 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Image (Upload new to replace)</label>
+              <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files[0])} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
             </div>
-            <div className="md:col-span-2 flex justify-end mt-2">
+            <div className="md:col-span-2 flex items-center">
+              <input 
+                type="checkbox" 
+                id="isPackage"
+                checked={newService.isPackage} 
+                onChange={e => setNewService({ ...newService, isPackage: e.target.checked })} 
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer" 
+              />
+              <label htmlFor="isPackage" className="ml-2 block text-sm text-gray-900 font-medium cursor-pointer">
+                This is a Combo / Package
+              </label>
+            </div>
+            <div className="md:col-span-2 flex justify-end gap-2 mt-2">
               <button type="submit" disabled={uploading} className={`btn-primary shadow-sm hover:shadow ${uploading ? 'opacity-70 cursor-not-allowed' : ''}`}>
                 {uploading ? 'Uploading & Saving...' : 'Save Service'}
               </button>
@@ -139,7 +151,7 @@ const Services = () => {
               <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => {
-                    setNewService({ name: service.name, duration: service.duration, price: service.price, image: service.image });
+                    setNewService({ name: service.name, duration: service.duration, price: service.price, image: service.image, isPackage: service.isPackage || false });
                     setEditingServiceId(service.id);
                     setIsAdding(true);
                     setImageFile(null);
@@ -153,10 +165,13 @@ const Services = () => {
               </div>
             </div>
             <div className="p-5 flex-1 flex flex-col">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-bold text-gray-800 text-lg leading-tight pr-2">{service.name}</h3>
-                <span className="font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md text-sm">₹{service.price}</span>
-              </div>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-lg font-bold text-gray-800 leading-tight pr-2">
+                    {service.name}
+                    {service.isPackage && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 uppercase tracking-wider align-middle">Package</span>}
+                  </h3>
+                  <span className="font-bold text-primary whitespace-nowrap bg-primary/10 px-2 py-1 rounded-md text-sm">₹{service.price}</span>
+                </div>
               <p className="text-sm text-gray-500 mt-auto flex items-center pt-3 border-t border-gray-50">
                 <span className="bg-gray-100 px-2 py-0.5 rounded text-xs mr-2">Duration</span> {service.duration}
               </p>

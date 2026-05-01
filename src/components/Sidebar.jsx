@@ -11,7 +11,8 @@ import {
   Settings,
   X,
   MessageSquareShare,
-  Bell
+  Bell,
+  Camera
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -21,6 +22,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { name: 'Appointments', path: '/appointments', icon: CalendarCheck },
     { name: 'Calendar', path: '/calendar', icon: CalendarDays },
     { name: 'Services', path: '/services', icon: Scissors },
+    { name: 'Lookbook', path: '/lookbook', icon: Camera },
     { name: 'Offers', path: '/offers', icon: Gift },
     { name: 'Loyalty', path: '/loyalty', icon: Star },
     { name: 'Reviews', path: '/reviews', icon: MessageSquareShare },

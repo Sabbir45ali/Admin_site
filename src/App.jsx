@@ -13,6 +13,7 @@ import Loyalty from './pages/Loyalty';
 import Reviews from './pages/Reviews';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
+import Lookbook from './pages/Lookbook';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="appointments" element={<Appointments />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="services" element={<Services />} />
+            <Route path="lookbook" element={<Lookbook />} />
             <Route path="offers" element={<Offers />} />
             <Route path="loyalty" element={<Loyalty />} />
             <Route path="reviews" element={<Reviews />} />

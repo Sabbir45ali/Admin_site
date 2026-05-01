@@ -32,6 +32,16 @@ export const updateLoyaltyPoints = async (clientId, points) => {
   return res.json();
 };
 
+export const updateClientNotes = async (clientId, notes) => {
+  const res = await fetch(`${API_BASE_URL}/clients/${clientId}/notes`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ notes }),
+  });
+  if (!res.ok) throw new Error("Failed to update notes");
+  return res.json();
+};
+
 export const getLoyaltySettings = async () => {
   const res = await fetch(`${API_BASE_URL}/loyalty-settings`, {
     headers: getAuthHeaders(),
@@ -138,6 +148,37 @@ export const deleteService = async (id) => {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Failed to delete service");
+  return id;
+};
+
+// Lookbook API
+export const getLookbook = async () => {
+  const res = await fetch(`${API_BASE_URL}/lookbook`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to fetch lookbook");
+  return data.data || [];
+};
+
+export const addLookbookEntry = async (entry) => {
+  const res = await fetch(`${API_BASE_URL}/lookbook`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(entry),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to add lookbook entry");
+  return { id: data.data.id, ...entry };
+};
+
+export const deleteLookbookEntry = async (id) => {
+  const res = await fetch(`${API_BASE_URL}/lookbook/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to delete lookbook entry");
   return id;
 };
 

@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { getDashboardStats } from '../services/api';
-import { Users, CalendarCheck, CalendarDays, Star } from 'lucide-react';
+import { getDashboardStats, getBookings } from '../services/api';
+import { Users, CalendarCheck, CalendarDays, Star, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { format, subDays, isSameDay } from 'date-fns';
+
+const COLORS = ['#FF69B4', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -14,10 +18,40 @@ const Dashboard = () => {
     todaysAppointmentsCount: 0,
     avgLoyaltyPoints: 0
   });
+  
+  const [chartData, setChartData] = useState([]);
+  const [pieData, setPieData] = useState([]);
 
   useEffect(() => {
-    getDashboardStats().then(data => {
-      setStats(data);
+    Promise.all([getDashboardStats(), getBookings()]).then(([statsData, bookings]) => {
+      setStats(statsData);
+      
+      // Generate Last 7 Days Trend
+      const last7Days = Array.from({length: 7}).map((_, i) => subDays(new Date(), 6 - i));
+      const trendData = last7Days.map(date => {
+        const count = bookings.filter(b => b.date && isSameDay(new Date(b.date), date)).length;
+        return {
+          name: format(date, 'MMM dd'),
+          bookings: count
+        };
+      });
+      setChartData(trendData);
+
+      // Generate Services Popularity
+      const servicesCount = {};
+      bookings.forEach(b => {
+        if (b.serviceName) {
+          servicesCount[b.serviceName] = (servicesCount[b.serviceName] || 0) + 1;
+        }
+      });
+      
+      const pData = Object.keys(servicesCount)
+        .map(key => ({ name: key, value: servicesCount[key] }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5); // top 5
+      
+      setPieData(pData.length > 0 ? pData : [{name: 'No data', value: 1}]);
+      
       setLoading(false);
     });
   }, []);
@@ -62,27 +96,63 @@ const Dashboard = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Welcome to BeautyAdmin</h3>
-          <p className="text-gray-500 text-sm leading-relaxed mb-4">
-            Manage your beauty parlour effortlessly. Monitor your client base, track upcoming appointments, handle services and loyalty programs, all from one centralized dashboard tailored for a smooth administrative experience.
-          </p>
-          <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-            <p className="text-primary-dark text-sm font-medium">Check out today's upcoming appointments in the Calendar tab!</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+          <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center">
+            <TrendingUp className="w-5 h-5 mr-2 text-primary" />
+            Booking Trends (Last 7 Days)
+          </h3>
+          <div className="h-72 w-full">
+            {loading ? <Skeleton height="100%" borderRadius={12} /> : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#FF69B4" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#FF69B4" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#6b7280'}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#6b7280'}} allowDecimals={false} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    cursor={{ stroke: '#FF69B4', strokeWidth: 1, strokeDasharray: '4 4' }}
+                  />
+                  <Area type="monotone" dataKey="bookings" stroke="#FF69B4" strokeWidth={3} fillOpacity={1} fill="url(#colorBookings)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
+
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <button onClick={() => navigate('/appointments')} className="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
-              <CalendarCheck className="w-6 h-6 text-primary mb-2" />
-              <span className="text-sm font-medium text-gray-700">Appts</span>
-            </button>
-            <button onClick={() => navigate('/clients')} className="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
-              <Users className="w-6 h-6 text-primary mb-2" />
-              <span className="text-sm font-medium text-gray-700">Clients</span>
-            </button>
+          <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center">
+            <Star className="w-5 h-5 mr-2 text-yellow-500" />
+            Top Services
+          </h3>
+          <div className="h-64 w-full">
+             {loading ? <Skeleton height="100%" borderRadius={12} /> : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="45%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }}/>
+                </PieChart>
+              </ResponsiveContainer>
+             )}
           </div>
         </div>
       </div>
