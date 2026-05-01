@@ -49,10 +49,10 @@ export const AuthProvider = ({ children }) => {
         const adminUser = { uid: data.uid, email, role: 'admin', token: data.token };
         localStorage.setItem('admin_user', JSON.stringify(adminUser));
         setUser(adminUser);
-        
+
         // Setup push notifications after successful login
         await requestNotificationPermission();
-        
+
         return true;
       }
       throw new Error(data.message || 'Invalid email or password');

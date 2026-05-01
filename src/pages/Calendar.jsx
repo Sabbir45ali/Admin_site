@@ -118,8 +118,11 @@ const CalendarPage = () => {
                         <div key={idx} className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:border-primary/30 hover:shadow-md transition-all flex justify-between items-start group">
                           <div>
                             <div className="font-bold text-gray-800 mb-1 group-hover:text-primary transition-colors">{app.userName || 'Client'}</div>
-                            <div className="text-sm text-gray-600 mb-2">{app.serviceName || app.service || 'Unknown Service'}</div>
-                            <div className="text-xs font-semibold text-gray-500 flex items-center bg-gray-50 w-max px-2 py-1 rounded-md">
+                            <div className="text-sm text-gray-600">
+                              {app.serviceName || app.service || 'Unknown Service'}
+                              {app.servicePrice && <span className="ml-1 text-xs text-gray-400 font-semibold">(₹{app.servicePrice})</span>}
+                            </div>
+                            <div className="text-xs font-semibold text-gray-500 flex items-center bg-gray-50 w-max px-2 py-1 rounded-md mt-2">
                               <Clock className="w-3.5 h-3.5 mr-1.5 text-primary/70" /> {app.time || 'No time set'}
                             </div>
                           </div>

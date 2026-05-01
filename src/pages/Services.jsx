@@ -45,9 +45,9 @@ const Services = () => {
     }
 
     if (editingServiceId) {
-      await updateService(editingServiceId, { ...newService, price: parseFloat(newService.price) || 0, image: imageUrl });
+      await updateService(editingServiceId, { ...newService, price: newService.price, image: imageUrl });
     } else {
-      await addService({ ...newService, price: parseFloat(newService.price) || 0, image: imageUrl });
+      await addService({ ...newService, price: newService.price, image: imageUrl });
     }
 
     setIsAdding(false);
@@ -96,8 +96,8 @@ const Services = () => {
               <input required type="text" value={newService.duration} onChange={e => setNewService({ ...newService, duration: e.target.value })} className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-primary focus:border-primary" placeholder="e.g. 60 mins" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
-              <input required type="number" step="0.01" value={newService.price} onChange={e => setNewService({ ...newService, price: e.target.value })} className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-primary focus:border-primary" placeholder="0.00" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Price Range (₹)</label>
+              <input required type="text" value={newService.price} onChange={e => setNewService({ ...newService, price: e.target.value })} className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-primary focus:border-primary" placeholder="e.g. 500 - 1000" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Service Image</label>

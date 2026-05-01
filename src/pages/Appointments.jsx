@@ -181,7 +181,10 @@ const Appointments = () => {
               filteredAppointments.map(app => (
                 <tr key={app.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 font-medium text-gray-900">{app.userName || app.userEmail || 'Unknown'}</td>
-                  <td className="px-6 py-4 text-gray-700 font-medium text-sm">{app.serviceName || app.service || 'N/A'}</td>
+                  <td className="px-6 py-4 text-gray-700 font-medium text-sm">
+                    <div>{app.serviceName || app.service || 'N/A'}</div>
+                    {app.servicePrice && <div className="text-xs text-gray-500 font-semibold mt-0.5">₹{app.servicePrice}</div>}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-600 text-center">
                     <div className="font-medium text-gray-900 whitespace-nowrap leading-tight">{formatDateLine(app.date)}</div>
                     <div className="text-gray-500 whitespace-nowrap leading-tight mt-1">{formatTimeLine(app.time)}</div>
@@ -360,7 +363,15 @@ const Appointments = () => {
                     <select
                       required
                       value={newAppointment.serviceName}
-                      onChange={e => setNewAppointment({ ...newAppointment, serviceName: e.target.value })}
+                      onChange={e => {
+                        const sName = e.target.value;
+                        const s = services.find(srv => srv.name === sName);
+                        setNewAppointment({ 
+                          ...newAppointment, 
+                          serviceName: sName, 
+                          servicePrice: s ? s.price : '' 
+                        });
+                      }}
                       className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all appearance-none cursor-pointer bg-white"
                     >
                       <option value="">Select a service</option>
