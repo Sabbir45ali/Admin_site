@@ -171,7 +171,12 @@ const Layout = () => {
               <span className="text-sm font-medium text-gray-700 hidden sm:block">Admin</span>
             </div>
             <button
-              onClick={logout}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                logout();
+                navigate('/login', { replace: true });
+              }}
               className="ml-1 sm:ml-2 text-gray-400 hover:text-red-500 transition-colors p-1.5 sm:p-2"
               title="Logout"
             >
